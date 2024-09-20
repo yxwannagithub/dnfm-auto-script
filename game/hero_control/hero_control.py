@@ -9,39 +9,54 @@ def get_hero_control(name: str, scrcpy_adb: ScrcpyADB):
     :param scrcpy_adb:设备链接实例
     :return:
     """
-    if name == 'hong_yan':
-        from game.hero_control.hong_yan import HongYan
-        return HongYan(scrcpy_adb)
-    elif name == 'nai_ma':
-        from game.hero_control.nai_ma import NaiMa
-        return NaiMa(scrcpy_adb)
-    elif name == 'hua_hua':
-      from game.hero_control.hua_hua import Huahua
-      return Huahua(scrcpy_adb)
-    elif name == 'wu_shen':
-      from game.hero_control.wu_shen import WuShen
-      return WuShen(scrcpy_adb)
-    elif name == 'axl':
-      from game.hero_control.axl import AXL
-      return AXL(scrcpy_adb)
-    elif name == 'jian_zong':
-      from game.hero_control.jian_zong import JianZong
-      return JianZong(scrcpy_adb)
-    
+    if name == 'asura':
+        from game.hero_control.asura import Asura
+        return Asura(scrcpy_adb)
+    elif name == 'berserker':
+        from game.hero_control.berserker import Berserker
+        return Berserker(scrcpy_adb)
+    elif name == 'paladin':
+        from game.hero_control.paladin import Paladin
+        return Paladin(scrcpy_adb)
+    elif name == 'ranger':
+        from game.hero_control.ranger import Ranger
+        return Ranger(scrcpy_adb)
+    elif name == 'launcher':
+        from game.hero_control.launcher import Launcher
+        return Launcher(scrcpy_adb)
+    elif name == 'soul_bringer':
+        from game.hero_control.soul_bringer import SoulBringer
+        return SoulBringer(scrcpy_adb)
+    elif name == 'sword_master':
+        from game.hero_control.sword_master import SwordMaster
+        return SwordMaster(scrcpy_adb)
+    elif name == 'vagabond':
+        from game.hero_control.vagabond import Vagabond
+        return Vagabond(scrcpy_adb)
+    elif name == 'demon_slayer':
+        from game.hero_control.demon_slayer import DemonSlayer
+        return DemonSlayer(scrcpy_adb)
+    # elif name == 'axl':
+    #   from game.hero_control.asura import AXL
+    #   return AXL(scrcpy_adb)
+    # elif name == 'jian_zong':
+    #   from game.hero_control.jian_zong import JianZong
+    #   return JianZong(scrcpy_adb)
+
     else:
         raise ValueError(f'{name} is not support')
 
 
 if __name__ == '__main__':
     adb = ScrcpyADB()
-    hero = get_hero_control('jian_zong', adb)
+    hero = get_hero_control('asura', adb)
     # hero.room_skill_combo.get(6)()
-    hero.skill_combo_5() 
+    hero.add_buff()
     # hero.move(30, 1)
     # time.sleep(2)
     # hero.move(60, 1)
     # time.sleep(2)
-    
+
     # hero.move(400, 1)
     # hero.move(300, 1)
     # adb.touch([1018, 75])

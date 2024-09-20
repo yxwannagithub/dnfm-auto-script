@@ -5,15 +5,17 @@ from utils.logger import logger
 import time
 
 
-class AXL(HeroControlBase):
+class DemonSlayer(HeroControlBase):
     """
-    阿修罗
+    剑宗
     """
     wait = 0.1
     def __init__(self, adb: ScrcpyADB):
         super().__init__(adb)
-        self.buff1 = buff1  # buff1
-        self.awaken_skill = awaken_skill  # 觉醒
+        self.back_jump = back_jump
+        self.skill_wheel = skill_wheel
+        self.buff2 = skill_wheel_down  # buff
+        self.awaken_skill = skill_top_a  # 觉醒
         self.attack = attack  # 普通攻击
         self.useSkills = {}  # 存放已经释放技能的房间下标
         self.room_skill_combo = {
@@ -29,14 +31,17 @@ class AXL(HeroControlBase):
             77: self.skill_combo_77,
         }
         self.skills = { # 全部技能
-            "无双波": skill1,
-            "扎热": skill2,
-            "小波": skill3,
-            "冰波": skill4,
-            "火波": skill5,
-            "邪光": skill6,
-            "怒气": skill7,
-            "不动冥王": buff3,
+            "觉醒": skill_top_a,
+            "魔鬼": skill_top_b,
+            "群魔": skill_top_c,
+            "大鞭": skill_top_d,
+            "乱舞": skill_middle_a,
+            "上抽": skill_middle_b,
+            "穿心地刺": skill_middle_c,
+            "地抓": skill_middle_d,
+            "哈哈哈": skill_bottom_a,
+            "小鞭": skill_bottom_b,
+            "后跳": back_jump,
         }  
         self.last_angle = 0
         
@@ -56,15 +61,14 @@ class AXL(HeroControlBase):
         else:
             self.room_skill_combo.get((room_index + 1), self.skill_combo_77)()
             self.useSkills[room_index] = True
-            
 
     def add_buff(self):
         """
         添加buff
         :return:
         """
-        self.adb.touch(self.buff1)
-        time.sleep(1)
+        self.adb.swipe(self.skill_wheel, self.buff2)
+        time.sleep(0.5)
         logger.info("加 buff")
         pass
 
@@ -78,13 +82,10 @@ class AXL(HeroControlBase):
         time.sleep(0.3)
         self.moveV2(0)
         self.add_buff()
-        time.sleep(0.2)
-        self.moveV2(340)
-        time.sleep(0.1)
-        self.adb.touch(self.skills['冰波'])
-        time.sleep(0.1)
-        self.adb.touch(self.skills['邪光'])
-        time.sleep(0.2)
+        self.adb.touch(self.skills['魔鬼'], 0.6)
+        self.adb.touch(self.skills['穿心地刺'], 0.1)
+        time.sleep(0.4)
+        self.adb.touch(self.skills['穿心地刺'], 0.1)
         logger.info("技能连招1")
         pass
 
@@ -94,14 +95,11 @@ class AXL(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(270)
-        time.sleep(0.35)
-        self.moveV2(1, 0.1)
+        self.moveV2(275)
+        time.sleep(0.5)
+        self.moveV2(1,0.1)
+        self.adb.touch(self.skills['大鞭'],0.1)
         time.sleep(0.3)
-        self.adb.touch(self.skills['无双波'])
-        time.sleep(0.3)
-        self.adb.touch(self.skills['无双波'])
-        time.sleep(0.2)
         logger.info("技能连招2")
         pass
 
@@ -115,8 +113,8 @@ class AXL(HeroControlBase):
         time.sleep(0.3)
         self.moveV2(0)
         time.sleep(0.3)
-        self.adb.touch(self.skills['火波'])
-        time.sleep(0.2)
+        self.adb.touch(self.skills['上抽'],0.1)
+        time.sleep(0.1)
         logger.info("技能连招3")
         pass
     
@@ -125,16 +123,12 @@ class AXL(HeroControlBase):
         技能连招4
         :return:
         """
-        self.moveV2(270)
-        time.sleep(0.2)
-        self.moveV2(1)
+        self.sleep_01()
+        self.moveV2(340)
         time.sleep(0.3)
-        self.adb.touch(self.skills['扎热'])
-        time.sleep(0.2)
-        self.adb.touch(self.skills['冰波'])
-        time.sleep(0.1)
-        self.adb.touch(self.skills['邪光'])
-        time.sleep(0.1)
+        self.adb.touch(self.skills['哈哈哈'], 1.5)
+        self.moveV2(0)
+        time.sleep(2)
         logger.info("技能连招4")
         pass
     
@@ -143,26 +137,14 @@ class AXL(HeroControlBase):
         技能连招5
         :return:
         """
-        time.sleep(1)
-        self.moveV2(90)
-        time.sleep(0.2)
-        self.moveV2(0)
-        self.adb.touch(self.skills['无双波'])
-        time.sleep(0.3)
-        self.adb.touch(self.skills['无双波'])
-        self.adb.touch(self.skills['无双波'])
-        time.sleep(0.2)
-        self.moveV2(90)
-        time.sleep(0.7)
-        self.moveV2(0)
-        self.adb.touch(self.awaken_skill)
-        time.sleep(0.5)
-        self.adb.touch(self.awaken_skill)
-        time.sleep(1)
-        self.moveV2(180)
-        time.sleep(2)
-        self.moveV2(90)
-        time.sleep(0.2)
+        self.sleep_01()
+        self.moveV2(90, 0.7)
+        self.moveV2(1, 0.1)
+        self.adb.touch(self.skills['乱舞'], 1.5)
+        self.sleep_01()
+        self.moveV2(180, 1)
+        self.moveV2(90, 0.3)
+        self.moveV2(180, 2)
         logger.info("技能连招5")
         pass
     
@@ -172,10 +154,8 @@ class AXL(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(200)
-        time.sleep(0.35)
-        self.sleep_01()
-        self.adb.touch(self.skills['不动冥王'])
+        self.moveV2(245, 0.4)
+        self.adb.touch(self.awaken_skill)
         logger.info("技能连招6")
         pass
     
@@ -186,11 +166,11 @@ class AXL(HeroControlBase):
         """
         self.sleep_01()
         self.moveV2(335)
-        time.sleep(0.3)
-        self.sleep_01()
-        self.adb.touch(self.skills['冰波'])
+        time.sleep(0.4)
+        self.moveV2(1)
         time.sleep(0.1)
-        self.adb.touch(self.skills['邪光'])
+        self.moveV2(0)
+        self.adb.touch(self.skills['哈哈哈'], 1.5)
         time.sleep(0.1)
         pass
     
@@ -200,41 +180,39 @@ class AXL(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(340)
+        self.moveV2(350)
         time.sleep(0.2)
         self.moveV2(0)
-        time.sleep(0.5)
-        self.adb.touch(self.skills['火波'])
-        time.sleep(0.1)
+        self.adb.touch(self.skills['大鞭'])
         pass
-      
+    
     def skill_combo_10(self):
         """
         技能连招10
         :return:
         """
         self.sleep_01()
-        self.moveV2(360)
+        self.moveV2(335)
+        time.sleep(0.3)
+        self.moveV2(1)
+        self.adb.touch(self.skills['群魔'], 0.1)
+        time.sleep(0.1)
+        self.adb.touch(self.skills['穿心地刺'], 0.1)
+        time.sleep(0.1)
+        self.adb.touch(self.skills['穿心地刺'], 0.1)
         time.sleep(0.4)
-        self.adb.touch(self.skills['无双波'])
-        time.sleep(0.1)
-        self.adb.touch(self.skills['无双波'])
+        self.adb.touch(self.skills['穿心地刺'], 0.1)
         time.sleep(0.2)
-        self.adb.touch(self.skills['扎热'])
+        self.adb.touch(self.skills['上抽'], 0.1)
         time.sleep(0.2)
-        self.adb.touch(self.skills['冰波'])
+        self.adb.touch(self.skills['乱舞'], 1.5)
         time.sleep(0.1)
-        self.adb.touch(self.skills['邪光'])
         pass
-
       
     def skill_combo_77(self):
         """
         小技能连招
         :return:
         """
-        self.adb.touch(self.skills['小波'])
-        time.sleep(0.3)
-        self.adb.touch(self.skills['怒气'])
         logger.info("小技能连招")
         pass

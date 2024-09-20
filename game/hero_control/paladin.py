@@ -5,15 +5,16 @@ from utils.logger import logger
 import time
 
 
-class NaiMa(HeroControlBase):
+class Paladin(HeroControlBase):
     """
     红眼
     """
     wait = 0.1
     def __init__(self, adb: ScrcpyADB):
         super().__init__(adb)
-        self.buff1 = buff1  # buff1
-        self.awaken_skill = awaken_skill  # 觉醒
+        self.skill_wheel = skill_wheel
+        self.buff2 = skill_wheel_down  # 智力
+        self.awaken_skill = skill_top_a  # 觉醒
         self.attack = attack  # 普通攻击
         self.useSkills = {}  # 存放已经释放技能的房间下标
         self.room_skill_combo = {
@@ -29,14 +30,18 @@ class NaiMa(HeroControlBase):
             77: self.skill_combo_77,
         }
         self.skills = { # 全部技能
-            "锤子": skill1,
-            "矛": skill2,
-            "闪电": skill3,
-            "挥舞": skill4,
-            "阵": skill5,
-            "圆盘": skill6,
-            "盾牌": skill7,
-            "后跳": skill8
+            "光圈combo": skill_bottom_a,
+            "长矛combo": skill_bottom_b,
+            "大雷击": skill_middle_a,
+            "三板斧": skill_middle_b,
+            "光柱": skill_middle_c,
+            "盾击combo": skill_middle_d,
+            "觉醒": skill_top_a,
+            "抓取": skill_top_b,
+            "大锤": skill_top_c,
+            "唱歌": skill_top_d,
+            "光球": skill_corner,
+            "后跳": back_jump,
         }  
         self.last_angle = 0
         
@@ -62,7 +67,7 @@ class NaiMa(HeroControlBase):
         添加buff
         :return:
         """
-        self.adb.touch(self.buff1)
+        self.adb.swipe(self.skill_wheel, self.buff2, 0.3)
         time.sleep(1)
         logger.info("加 buff")
         pass
@@ -73,14 +78,12 @@ class NaiMa(HeroControlBase):
         :return:
         """
         self.reset()
-        self.moveV2(295)
+        self.moveV2(295, 0.35)
         time.sleep(0.3)
         self.moveV2(0)
         self.add_buff()
         time.sleep(0.2)
-        self.adb.touch(self.skills['闪电'])
-        self.moveV2(1)
-        self.adb.touch(self.skills['后跳'])
+        self.adb.touch(self.skills['盾击combo'])
         time.sleep(0.1)
         logger.info("技能连招1")
         pass
@@ -94,9 +97,8 @@ class NaiMa(HeroControlBase):
         self.moveV2(295)
         time.sleep(0.3)
         self.moveV2(0)
-        self.adb.touch(self.skills['盾牌'])
+        self.adb.touch(self.skills['光圈combo'])
         self.sleep_01()
-        self.adb.touch(self.skills['圆盘'])
         logger.info("技能连招2")
         pass
 
@@ -110,7 +112,7 @@ class NaiMa(HeroControlBase):
         time.sleep(0.5)
         self.moveV2(0)
         time.sleep(0.6)
-        self.adb.touch(self.skills['挥舞'])
+        self.adb.touch(self.skills['三板斧'])
         logger.info("技能连招3")
         pass
     
@@ -122,11 +124,11 @@ class NaiMa(HeroControlBase):
         self.sleep_01()
         self.moveV2(340)
         time.sleep(0.3)
-        self.adb.touch(self.skills['阵'])
-        time.sleep(2)
-        self.moveV2(1)
-        time.sleep(0.3)
-        self.adb.touch(self.skills['后跳'])
+        self.adb.touch(self.skills['盾击combo'])
+        time.sleep(0.1)
+        self.adb.touch(self.skills['盾击combo'])
+        time.sleep(0.1)
+        self.adb.touch(self.skills['盾击combo'])
         logger.info("技能连招4")
         pass
     
@@ -136,11 +138,11 @@ class NaiMa(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(145, 0.8)
+        self.moveV2(90, 0.4)
         self.moveV2(1, 0.1)
-        self.adb.touch(self.skills['盾牌'])
-        self.sleep_01()
-        self.adb.touch(self.skills['圆盘'])
+        self.adb.touch(self.skills['唱歌'])
+        time.sleep(2)
+        self.adb.touch(self.skills['后跳'])
         self.sleep_01()
         self.moveV2(90, 0.35)
         self.moveV2(180, 1)
@@ -153,7 +155,7 @@ class NaiMa(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(180)
+        self.moveV2(180, 0.1)
         time.sleep(0.4)
         self.adb.touch(self.awaken_skill)
         logger.info("技能连招6")
@@ -167,12 +169,14 @@ class NaiMa(HeroControlBase):
         self.sleep_01()
         self.moveV2(335)
         time.sleep(0.4)
-        self.moveV2(1)
+        self.moveV2(1, 0.1)
         time.sleep(0.1)
         self.moveV2(0)
-        self.adb.touch(self.skills['盾牌'])
+        self.adb.touch(self.skills['盾击combo'])
         time.sleep(0.1)
-        self.adb.touch(self.skills['圆盘'])
+        self.adb.touch(self.skills['盾击combo'])
+        time.sleep(0.1)
+        self.adb.touch(self.skills['盾击combo'])
         pass
     
     def skill_combo_9(self):
@@ -185,7 +189,7 @@ class NaiMa(HeroControlBase):
         time.sleep(0.7)
         self.moveV2(0)
         time.sleep(0.4)
-        self.adb.touch(self.skills['挥舞'])
+        self.adb.touch(self.skills['三板斧'])
         pass
     
     def skill_combo_10(self):
@@ -198,7 +202,7 @@ class NaiMa(HeroControlBase):
         time.sleep(0.3)
         self.moveV2(1)
         time.sleep(0.1)
-        self.adb.touch(self.skills['锤子'])
+        self.adb.touch(self.skills['大锤'])
         pass
       
     def skill_combo_77(self):

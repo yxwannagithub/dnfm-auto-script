@@ -286,6 +286,12 @@ class GameAction:
         self.adb = adb
         self.next = next
         self.hero_ctrl = get_hero_control(hero_name, adb)
+        self.room_skill_combo = self.hero_ctrl.room_skill_combo
+        self.skills = self.hero_ctrl.skills
+        self.skill_wheel = self.hero_ctrl.skill_wheel
+        self.buff1 = self.hero_ctrl.buff1
+        self.buff2 = self.hero_ctrl.buff2
+        self.attack = self.hero_ctrl.attack
         self.map_path = map_info["bwj"]["boss_path"]
         self.map_gate = map_info["bwj"]["boss_gate"]
         self.room_index = 0  # 房间下标
@@ -331,149 +337,213 @@ class GameAction:
             comeback = result["comeback"]
             zeroPL = result["zeroPL"]
             repair = result["repair"]
-            if is_image_almost_black(image):
-                if self.pre_state == False:
-                    logger.info("过图了！")
-                    self.kashi = 0
-                    last_room_pos = hero_track[0]
-                    hero_track = deque()
-                    hero_track.appendleft([1 - last_room_pos[0], 1 - last_room_pos[1]])
-                    self.hero_ctrl.reset()
-                    self.pre_state = True
-                else:
-                    continue
-            if self.pre_state == True:
-                # 记录房间号
-                if len(hero) > 0:
-                    self.room_index += 1
-                    self.pre_state = False
-                    logger.info(f"记录房间号: {self.room_index}")
-                else:
-                    continue
-            # 翻盘
-            if len(card) >= 8:
-                logger.info("翻牌")
-                self.hero_ctrl.reset()
-                time.sleep(1)
-                self.adb.touch([0.7 * image.shape[1], 0.25 * image.shape[0]])
-                self.detect_retry = True
-                time.sleep(7)
+
             # 计算英雄位置
             self.calculate_hero_pos(hero_track, hero)
 
-            # 如果有怪物
-            if len(monster) > 0:
-                logger.info(f"有怪物，room_index=%d" % self.room_index)
-                close_monster, distance = find_close_point_to_box(
-                    monster, hero_track[0]
-                )
-                angle = calculate_point_to_box_angle(hero_track[0], close_monster)
-                close_monster_point = calculate_center(close_monster)
-                self.hero_ctrl.killMonsters(angle, self.room_index, hero_track[0], close_monster_point)
-            # 如果有物品
-            elif len(item) > 0:
-                logger.info("有物品，room_index=%d" % self.room_index)
-                if len(gate) > 0:
-                    close_gate, distance = find_close_point_to_box(gate, hero_track[0])
-                    farthest_item, distance = find_farthest_box(item, close_gate)
-                    angle = calculate_point_to_box_angle(hero_track[0], farthest_item)
-                else:
-                    close_item, distance = find_close_point_to_box(item, hero_track[0])
-                    angle = calculate_point_to_box_angle(hero_track[0], close_item)
-                # self.hero_ctrl.attack(False)
-                self.hero_ctrl.moveV2(angle)
-            # 修理装备
-            elif len(repair) > 0 and repair[0][4] > 0.8:
-                logger.info("修理装备")
-                self.hero_ctrl.reset()
-                self.adb.touch(get_dom_xy_px(repair[0], image), 0.2)
-                time.sleep(1)
-                self.adb.touch(repair_confirm, 0.3)
-                time.sleep(1)
-                self.adb.touch(close_repair_page)
-            # 发现引导位 并且还没到过狮子头房间 则当前房间为狮子头的前一个房间
-            elif len(guide) > 0 and guide[0][4] > 0.8 and self.room_index < 4:
-                logger.info("发现引导位 并且还没到过狮子头房间")
-                self.room_index = 4
-                continue
-            # 狮子头前一个房间先找引导位
-            elif len(guide) > 0 and self.room_index == 4 and len(gate) < 1:
-                logger.info("找引导位")
-                close_guide, distance = find_closest_or_second_closest_box(
-                    guide, hero_track[0]
-                )
-                angle = calculate_point_to_box_angle(hero_track[0], close_guide)
-                # time.sleep(0.1)
-                self.hero_ctrl.moveV2(angle, 0.2)
-            # 如果有门
-            elif len(gate) > 0:
-                logger.info(f"记录门: {self.next_room_direction}")
-                if len(guide) > 0 and self.room_index == 4:
-                    continue
-                # if(self.room_index == 4):
-                #     self.hero_ctrl.move(300, 0.3)
-                #     time.sleep(1)
-                #     self.hero_ctrl.move(180, 1.5)
-                #     continue
-                if self.next_room_direction == "left":  # 左门
-                    close_gate, distance = find_close_point_to_box(gate, hero_track[0])
-                    angle = calculate_gate_angle(hero_track[0], close_gate)
-                    # 如果在执行普通攻击 则结束普通攻击
-                    # self.ctrl.attack(False)
-                else:
-                    close_gate, distance = find_close_point_to_box(gate, hero_track[0])
-                    angle = calculate_point_to_box_angle(hero_track[0], close_gate)
-                    # self.ctrl.attack(False)
-                self.hero_ctrl.moveV2(angle)
-            # 如果有箭头
-            elif (len(go) > 0 and self.room_index != 4) or (len(go) > 0 and self.kashi > 300):
-                logger.info("有箭头")
-                close_arrow, distance = find_closest_or_second_closest_box(
-                    go, hero_track[0]
-                )
-                angle = calculate_point_to_box_angle(hero_track[0], close_arrow)
-                self.hero_ctrl.moveV2(angle)
-            # pl已刷完 返回城镇
-            elif len(comeback) > 0 and len(zeroPL) > 0 and zeroPL[0][4] > 0.9:
-              logger.info("pl已刷完 返回城镇")
-              self.thread_run = False
-              self.adb.touch(get_dom_xy_px(find_highest_confidence(comeback), image), 0.2)
-              time.sleep(20)
-              self.next()
-            # 重新挑战
-            elif self.detect_retry == True:
-                logger.info("重新挑战")
-                if len(item) > 0 or len(again) < 1:
-                    continue
-                else:
-                    self.hero_ctrl.reset()
-                    time.sleep(1)
-                    # 重新挑战
-                    self.adb.touch(
-                        get_dom_xy_px(find_highest_confidence(again), image), 0.2
-                    )
-                    time.sleep(1.5)
-                    self.adb.touch(again_start_confirm, 0.2)
-                    time.sleep(3)
-                    self.hero_ctrl.useSkills = {}
-                    self.next_room_direction = "down"
-                    self.detect_retry = False
-                    self.room_index = 0
-                    hero_track = deque()
-                    hero_track.appendleft([0, 0])
-            # 无目标
-            else:
-                logger.info("无目标，room_index=%d" % self.room_index)
-                self.kashi += 1
-                if self.kashi % 50 == 0:
-                    if self.room_index == 4:
-                        angle = calculate_angle_to_box(hero_track[0], [0.25, 0.6])
-                    else:
-                        angle = calculate_angle_to_box(hero_track[0], [0.5, 0.75])
-                    self.hero_ctrl.moveV2(0)
-                    self.hero_ctrl.moveV2(angle, 0.2)
-                if self.kashi % 70 == 0:
-                    self.random_move()
+            # self.adb.swipe(self.skill_wheel, self.buff2)
+            # logger.info("杀意")
+            # time.sleep(1)
+            # self.room_skill_combo.get(5)()
+            # self.moveV2(90, 0.4)
+            # self.moveV2(0)
+            # self.adb.touch(self.skills['无双波'])
+            # time.sleep(1.4)
+            # # self.adb.touch(self.skills['无双波'])
+            # self.adb.touch(self.skills['无双波'])
+
+            time.sleep(1)
+            self.adb.touch(self.skills['多重爆头'])
+            time.sleep(1)
+            self.adb.touch(self.skills['双鹰回旋'], 0.1)
+            self.adb.touch(self.attack, 3)
+            time.sleep(1)
+            self.adb.touch(self.skills['回旋踢combo'], 0.1)
+            time.sleep(0.1)
+            self.adb.touch(self.skills['回旋踢combo'], 0.1)
+            time.sleep(0.1)
+            self.adb.touch(self.skills['回旋踢combo'], 0.1)
+            time.sleep(2)
+            self.adb.touch(self.skills['乱射'], 2)
+
+
+            # self.adb.swipe(self.skill_wheel, self.buff2)
+            # logger.info("杀意")
+            # time.sleep(1)
+            # self.hero_ctrl.adb.touch(self.skills['冰波combo'], 0.1)
+            # logger.info("释放连击1")
+            # time.sleep(0.1)
+            # self.hero_ctrl.adb.touch(self.skills['冰波combo'], 0.1)
+            # logger.info("释放连击2")
+            # time.sleep(0.5)
+            # self.hero_ctrl.adb.touch(self.skills['冰波combo'], 0.1)
+            # logger.info("释放连击3")
+            # time.sleep(0.4)
+            # self.hero_ctrl.adb.touch(self.skills['冰波combo'], 0.1)
+            # logger.info("释放连击4")
+
+
+
+
+            # time.sleep(1)
+            # self.hero_ctrl.adb.touch(self.skills['冰波combo'], 0)
+            # logger.info("释放连击3")
+            # self.hero_ctrl.adb.touch(self.skills['冰波combo'], 0)
+            # logger.info("释放连击4")
+            time.sleep(10)
+            # if len(monster) > 0:
+            #     logger.info(f"有怪物，room_index=%d" % self.room_index)
+            #     close_monster, distance = find_close_point_to_box(
+            #         monster, hero_track[0]
+            #     )
+            #     angle = calculate_point_to_box_angle(hero_track[0], close_monster)
+            #     close_monster_point = calculate_center(close_monster)
+            #     # self.hero_ctrl.killMonsters(angle, self.room_index, hero_track[0], close_monster_point)
+            #     self.room_skill_combo.get(1)()
+
+            # if is_image_almost_black(image):
+            #     if self.pre_state == False:
+            #         logger.info("过图了！")
+            #         self.kashi = 0
+            #         last_room_pos = hero_track[0]
+            #         hero_track = deque()
+            #         hero_track.appendleft([1 - last_room_pos[0], 1 - last_room_pos[1]])
+            #         self.hero_ctrl.reset()
+            #         self.pre_state = True
+            #     else:
+            #         continue
+            # if self.pre_state == True:
+            #     # 记录房间号
+            #     if len(hero) > 0:
+            #         self.room_index += 1
+            #         self.pre_state = False
+            #         logger.info(f"记录房间号: {self.room_index}")
+            #     else:
+            #         continue
+            # # 翻盘
+            # if len(card) >= 8:
+            #     logger.info("翻牌")
+            #     self.hero_ctrl.reset()
+            #     time.sleep(1)
+            #     self.adb.touch([0.7 * image.shape[1], 0.25 * image.shape[0]])
+            #     self.detect_retry = True
+            #     time.sleep(7)
+            # # 计算英雄位置
+            # self.calculate_hero_pos(hero_track, hero)
+            #
+            # # 如果有怪物
+            # if len(monster) > 0:
+            #     logger.info(f"有怪物，room_index=%d" % self.room_index)
+            #     close_monster, distance = find_close_point_to_box(
+            #         monster, hero_track[0]
+            #     )
+            #     angle = calculate_point_to_box_angle(hero_track[0], close_monster)
+            #     close_monster_point = calculate_center(close_monster)
+            #     self.hero_ctrl.killMonsters(angle, self.room_index, hero_track[0], close_monster_point)
+            # # 如果有物品
+            # elif len(item) > 0:
+            #     logger.info("有物品，room_index=%d" % self.room_index)
+            #     if len(gate) > 0:
+            #         close_gate, distance = find_close_point_to_box(gate, hero_track[0])
+            #         farthest_item, distance = find_farthest_box(item, close_gate)
+            #         angle = calculate_point_to_box_angle(hero_track[0], farthest_item)
+            #     else:
+            #         close_item, distance = find_close_point_to_box(item, hero_track[0])
+            #         angle = calculate_point_to_box_angle(hero_track[0], close_item)
+            #     # self.hero_ctrl.attack(False)
+            #     self.hero_ctrl.moveV2(angle)
+            # # 修理装备
+            # elif len(repair) > 0 and repair[0][4] > 0.8:
+            #     logger.info("修理装备")
+            #     self.hero_ctrl.reset()
+            #     self.adb.touch(get_dom_xy_px(repair[0], image), 0.2)
+            #     time.sleep(1)
+            #     self.adb.touch(repair_confirm, 0.3)
+            #     time.sleep(1)
+            #     self.adb.touch(close_repair_page)
+            # # 发现引导位 并且还没到过狮子头房间 则当前房间为狮子头的前一个房间
+            # elif len(guide) > 0 and guide[0][4] > 0.8 and self.room_index < 4:
+            #     logger.info("发现引导位 并且还没到过狮子头房间")
+            #     self.room_index = 4
+            #     continue
+            # # 狮子头前一个房间先找引导位
+            # elif len(guide) > 0 and self.room_index == 4 and len(gate) < 1:
+            #     logger.info("找引导位")
+            #     close_guide, distance = find_closest_or_second_closest_box(
+            #         guide, hero_track[0]
+            #     )
+            #     angle = calculate_point_to_box_angle(hero_track[0], close_guide)
+            #     # time.sleep(0.1)
+            #     self.hero_ctrl.moveV2(angle, 0.2)
+            # # 如果有门
+            # elif len(gate) > 0:
+            #     logger.info(f"记录门: {self.next_room_direction}")
+            #     if len(guide) > 0 and self.room_index == 4:
+            #         continue
+            #     # if(self.room_index == 4):
+            #     #     self.hero_ctrl.move(300, 0.3)
+            #     #     time.sleep(1)
+            #     #     self.hero_ctrl.move(180, 1.5)
+            #     #     continue
+            #     if self.next_room_direction == "left":  # 左门
+            #         close_gate, distance = find_close_point_to_box(gate, hero_track[0])
+            #         angle = calculate_gate_angle(hero_track[0], close_gate)
+            #         # 如果在执行普通攻击 则结束普通攻击
+            #         # self.ctrl.attack(False)
+            #     else:
+            #         close_gate, distance = find_close_point_to_box(gate, hero_track[0])
+            #         angle = calculate_point_to_box_angle(hero_track[0], close_gate)
+            #         # self.ctrl.attack(False)
+            #     self.hero_ctrl.moveV2(angle)
+            # # 如果有箭头
+            # elif (len(go) > 0 and self.room_index != 4) or (
+            #     len(go) > 0 and self.kashi > 300
+            # ):
+            #     logger.info("有箭头")
+            #     close_arrow, distance = find_closest_or_second_closest_box(
+            #         go, hero_track[0]
+            #     )
+            #     angle = calculate_point_to_box_angle(hero_track[0], close_arrow)
+            #     self.hero_ctrl.moveV2(angle)
+            # # pl已刷完 返回城镇
+            # elif len(comeback) > 0 and len(zeroPL) > 0 and zeroPL[0][4] > 0.9:
+            #   logger.info("pl已刷完 返回城镇")
+            #   self.thread_run = False
+            #   self.adb.touch(get_dom_xy_px(find_highest_confidence(comeback), image), 0.2)
+            #   time.sleep(10)
+            #   self.next()
+            # # 重新挑战
+            # elif self.detect_retry == True:
+            #     logger.info("重新挑战")
+            #     if len(item) > 0 or len(again) < 1:
+            #         continue
+            #     else:
+            #         self.hero_ctrl.reset()
+            #         time.sleep(1)
+            #         # 重新挑战
+            #         self.adb.touch(
+            #             get_dom_xy_px(find_highest_confidence(again), image), 0.2
+            #         )
+            #         time.sleep(0.5)
+            #         self.adb.touch(again_start_confirm, 0.2)
+            #         time.sleep(3)
+            #         self.hero_ctrl.useSkills = {}
+            #         self.next_room_direction = "down"
+            #         self.detect_retry = False
+            #         self.room_index = 0
+            #         hero_track = deque()
+            #         hero_track.appendleft([0, 0])
+            # # 无目标
+            # else:
+            #     logger.info("无目标，room_index=%d" % self.room_index)
+            #     self.kashi += 1
+            #     if self.kashi % 50 == 0:
+            #         if self.room_index == 4:
+            #             angle = calculate_angle_to_box(hero_track[0], [0.25, 0.6])
+            #         else:
+            #             angle = calculate_angle_to_box(hero_track[0], [0.5, 0.75])
+            #         self.hero_ctrl.moveV2(0)
+            #         self.hero_ctrl.moveV2(angle, 0.2)
 
     def random_move(self):
         """
@@ -495,7 +565,52 @@ class GameAction:
                     return
                 hero_track.appendleft(hero_track[0])
 
+    def view(self):
+        while True:
+          if self.adb.show_queue.empty():
+              time.sleep(0.001)
+              continue
+          image, result = self.adb.show_queue.get()
+          for boxs in result:
+              # 把坐标从 float 类型转换为 int 类型
+              det_x1, det_y1, det_x2, det_y2, conf, labelIndex = boxs
+              # 裁剪目标框对应的图像640*img1/img0
+              x1 = int(det_x1 * image.shape[1])
+              y1 = int(det_y1 * image.shape[0])
+              x2 = int(det_x2 * image.shape[1])
+              y2 = int(det_y2 * image.shape[0])
+              # 绘制矩形边界框
+              cv.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+              cv.putText(
+                  image,
+                  "{:.2f}".format(conf),
+                  (int(x1), int(y1 - 10)),
+                  cv.FONT_HERSHEY_SIMPLEX,
+                  0.5,
+                  (0, 0, 255),
+                  2,
+              )
+              cv.putText(
+                  image,
+                  self.adb.yolo.labels[int(labelIndex)],
+                  (int(x1), int(y1 - 30)),
+                  cv.FONT_HERSHEY_SIMPLEX,
+                  0.5,
+                  (0, 0, 255),
+                  2,
+              )
+          # image = cv.resize(image, (1168, int(image.shape[0] * 1168 / image.shape[1])))
+          image = cv.resize(image, (1168, int(image.shape[0] * 1168 / image.shape[1])))
+          cv.imshow("Image", image)
+          cv.waitKey(1)
+
 
 if __name__ == "__main__":
+    begin_time = time.localtime()
+    logger.info("游戏开始，当前时间：%s" % time.strftime("%Y-%m-%d %H:%M:%S", begin_time))
+
+    adb_time = time.localtime()
     adb = ScrcpyADB()
-    action = GameAction("hong_yan", adb)
+    time_difference = time.mktime(adb_time) - time.mktime(begin_time)
+    logger.info("获取ADB，当前时间：%s , 耗时：%d" % (time.strftime("%Y-%m-%d %H:%M:%S", begin_time) , time_difference))
+    action = GameAction("ranger", adb, None)

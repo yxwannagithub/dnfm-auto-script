@@ -426,7 +426,9 @@ class GameAction:
                     # self.ctrl.attack(False)
                 self.hero_ctrl.moveV2(angle)
             # 如果有箭头
-            elif (len(go) > 0 and self.room_index != 4) or (len(go) > 0 and self.kashi > 300):
+            elif (len(go) > 0 and self.room_index != 4) or (
+                len(go) > 0 and self.kashi > 300
+            ):
                 logger.info("有箭头")
                 close_arrow, distance = find_closest_or_second_closest_box(
                     go, hero_track[0]
@@ -438,7 +440,7 @@ class GameAction:
               logger.info("pl已刷完 返回城镇")
               self.thread_run = False
               self.adb.touch(get_dom_xy_px(find_highest_confidence(comeback), image), 0.2)
-              time.sleep(20)
+              time.sleep(10)
               self.next()
             # 重新挑战
             elif self.detect_retry == True:
@@ -452,7 +454,7 @@ class GameAction:
                     self.adb.touch(
                         get_dom_xy_px(find_highest_confidence(again), image), 0.2
                     )
-                    time.sleep(1.5)
+                    time.sleep(0.5)
                     self.adb.touch(again_start_confirm, 0.2)
                     time.sleep(3)
                     self.hero_ctrl.useSkills = {}
@@ -472,8 +474,6 @@ class GameAction:
                         angle = calculate_angle_to_box(hero_track[0], [0.5, 0.75])
                     self.hero_ctrl.moveV2(0)
                     self.hero_ctrl.moveV2(angle, 0.2)
-                if self.kashi % 70 == 0:
-                    self.random_move()
 
     def random_move(self):
         """
@@ -495,7 +495,49 @@ class GameAction:
                     return
                 hero_track.appendleft(hero_track[0])
 
+    def view(self):
+        while True:
+          if self.adb.show_queue.empty():
+              time.sleep(0.001)
+              continue
+          image, result = self.adb.show_queue.get()
+          for boxs in result:
+              # 把坐标从 float 类型转换为 int 类型
+              det_x1, det_y1, det_x2, det_y2, conf, labelIndex = boxs
+              # 裁剪目标框对应的图像640*img1/img0
+              x1 = int(det_x1 * image.shape[1])
+              y1 = int(det_y1 * image.shape[0])
+              x2 = int(det_x2 * image.shape[1])
+              y2 = int(det_y2 * image.shape[0])
+              # 绘制矩形边界框
+              cv.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+              cv.putText(
+                  image,
+                  "{:.2f}".format(conf),
+                  (int(x1), int(y1 - 10)),
+                  cv.FONT_HERSHEY_SIMPLEX,
+                  0.5,
+                  (0, 0, 255),
+                  2,
+              )
+              cv.putText(
+                  image,
+                  self.adb.yolo.labels[int(labelIndex)],
+                  (int(x1), int(y1 - 30)),
+                  cv.FONT_HERSHEY_SIMPLEX,
+                  0.5,
+                  (0, 0, 255),
+                  2,
+              )
+          # image = cv.resize(image, (1168, int(image.shape[0] * 1168 / image.shape[1])))
+          image = cv.resize(image, (1168, int(image.shape[0] * 1168 / image.shape[1])))
+          cv.imshow("Image", image)
+          cv.waitKey(1)
+
 
 if __name__ == "__main__":
     adb = ScrcpyADB()
-    action = GameAction("hong_yan", adb)
+
+    action = GameAction("vagabond", adb, None)
+
+    action.view()

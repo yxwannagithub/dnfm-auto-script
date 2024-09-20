@@ -21,7 +21,7 @@ class ScrcpyADB:
     连接设备，并启动 scrcpy
     """
 
-    def __init__(self, max_width=1168, max_fps=15):
+    def __init__(self, max_width=1168, max_fps=90):
         devices = adb.device_list()[0]
         if not devices:
             raise Exception("No devices connected")

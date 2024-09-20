@@ -5,16 +5,17 @@ from utils.logger import logger
 import time
 
 
-class JianZong(HeroControlBase):
+class Vagabond(HeroControlBase):
     """
     剑宗
     """
     wait = 0.1
     def __init__(self, adb: ScrcpyADB):
         super().__init__(adb)
-        self.buff1 = buff1  # buff1
-        self.buff2 = buff2  # buff2
-        self.awaken_skill = awaken_skill  # 觉醒
+        self.back_jump = back_jump
+        self.skill_wheel = skill_wheel
+        self.buff2 = skill_wheel_down  # buff
+        self.awaken_skill = skill_top_a  # 觉醒
         self.attack = attack  # 普通攻击
         self.useSkills = {}  # 存放已经释放技能的房间下标
         self.room_skill_combo = {
@@ -30,14 +31,17 @@ class JianZong(HeroControlBase):
             77: self.skill_combo_77,
         }
         self.skills = { # 全部技能
-            "千军破": skill1,
-            "瞬影破": skill2,
-            "破军斩": skill3,
-            "恶即斩": skill4,
-            "聚怪": skill5,
-            "幻剑术": skill6,
-            "穿云破空剑": skill7,
-            "后跳": skill8
+            "觉醒": skill_top_a,
+            "地抓": skill_top_b,
+            "空抓": skill_top_c,
+            "大波": skill_top_d,
+            "三大剑": skill_middle_a,
+            "拍拍": skill_middle_b,
+            "葬花": skill_middle_c,
+            "小波": skill_middle_d,
+            "砸地": skill_bottom_a,
+            "吸星大法": skill_bottom_b,
+            "后跳": back_jump,
         }  
         self.last_angle = 0
         
@@ -63,9 +67,8 @@ class JianZong(HeroControlBase):
         添加buff
         :return:
         """
-        self.adb.touch(self.buff1)
+        self.adb.swipe(self.skill_wheel, self.buff2)
         time.sleep(0.5)
-        self.adb.swipe(self.buff2, [self.buff2[0], self.buff2[1] + 100])
         logger.info("加 buff")
         pass
 
@@ -79,7 +82,7 @@ class JianZong(HeroControlBase):
         time.sleep(0.3)
         self.moveV2(0)
         self.add_buff()
-        self.adb.touch(self.skills['破军斩'], 1)
+        self.adb.touch(self.skills['小波'])
         time.sleep(0.2)
         logger.info("技能连招1")
         pass
@@ -90,10 +93,10 @@ class JianZong(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(295)
-        time.sleep(0.3)
-        self.moveV2(0)
-        self.adb.touch(self.skills['千军破'])
+        self.moveV2(275)
+        time.sleep(0.5)
+        self.moveV2(1,0.1)
+        self.adb.touch(self.skills['砸地'],0.1)
         time.sleep(0.3)
         logger.info("技能连招2")
         pass
@@ -108,9 +111,15 @@ class JianZong(HeroControlBase):
         time.sleep(0.3)
         self.moveV2(0)
         time.sleep(0.3)
-        self.adb.touch(self.skills['聚怪'])
+        self.adb.touch(self.skills['拍拍'],0.1)
         time.sleep(0.1)
-        self.adb.touch(self.skills['幻剑术'])
+        self.adb.touch(self.skills['拍拍'],0.1)
+        time.sleep(0.1)
+        self.adb.touch(self.skills['拍拍'],0.1)
+        time.sleep(0.1)
+        self.adb.touch(self.skills['拍拍'],0.1)
+        time.sleep(0.1)
+        self.adb.touch(self.skills['拍拍'],0.1)
         time.sleep(0.1)
         logger.info("技能连招3")
         pass
@@ -123,7 +132,7 @@ class JianZong(HeroControlBase):
         self.sleep_01()
         self.moveV2(340)
         time.sleep(0.3)
-        self.adb.touch(self.skills['瞬影破'])
+        self.adb.touch(self.skills['大波'])
         self.moveV2(0)
         time.sleep(2)
         logger.info("技能连招4")
@@ -137,10 +146,14 @@ class JianZong(HeroControlBase):
         self.sleep_01()
         self.moveV2(145, 0.8)
         self.moveV2(1, 0.1)
-        self.adb.touch(self.skills['破军斩'], 0.6)
+        self.adb.touch(self.skills['三大剑'], 0.1)
+        self.sleep_01()
+        self.adb.touch(self.skills['三大剑'], 0.2)
+        self.sleep_01()
+        self.adb.touch(self.skills['三大剑'], 0.2)
         self.sleep_01()
         self.moveV2(180, 1)
-        self.moveV2(90, 0.4)
+        self.moveV2(90, 0.3)
         self.moveV2(180)
         time.sleep(1)
         logger.info("技能连招5")
@@ -152,7 +165,7 @@ class JianZong(HeroControlBase):
         :return:
         """
         self.sleep_01()
-        self.moveV2(180, 0.1)
+        self.moveV2(235, 0.2)
         self.adb.touch(self.awaken_skill)
         logger.info("技能连招6")
         pass
@@ -168,7 +181,7 @@ class JianZong(HeroControlBase):
         self.moveV2(1)
         time.sleep(0.1)
         self.moveV2(0)
-        self.adb.touch(self.skills['瞬影破'])
+        self.adb.touch(self.skills['大波'])
         time.sleep(0.1)
         pass
     
@@ -181,7 +194,7 @@ class JianZong(HeroControlBase):
         self.moveV2(350)
         time.sleep(0.2)
         self.moveV2(0)
-        self.adb.touch(self.skills['千军破'])
+        self.adb.touch(self.skills['小波'])
         pass
     
     def skill_combo_10(self):
@@ -194,7 +207,12 @@ class JianZong(HeroControlBase):
         time.sleep(0.3)
         self.moveV2(1)
         time.sleep(0.1)
-        self.adb.touch(self.skills['恶即斩'])
+        self.adb.touch(self.skills['砸地'], 0.5)
+        self.adb.touch(self.skills['吸星大法'])
+        time.sleep(0.1)
+        self.adb.touch(self.skills['吸星大法'])
+        time.sleep(0.3)
+        self.adb.touch(self.skills['吸星大法'])
         pass
       
     def skill_combo_77(self):

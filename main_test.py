@@ -3,7 +3,6 @@ import cv2 as cv
 from device_manager.scrcpy_adb import ScrcpyADB
 from game.dengeon.game_action import GameAction
 from data_const.coordinate import *
-from utils.logger import logger
 import threading
 from functools import partial
 
@@ -42,21 +41,15 @@ class Main:
     def __init__(self, hero_name: str):
       self.adb = ScrcpyADB()
       self.roles = {
-        '阿修罗':  {'name': 'asura', 'point': role_asura, 'next_role': '狂战士', 'map': 'bwj', 'position': 'up'},
-        '狂战士': {'name': 'berserker', 'point': role_berserker, 'next_role': '圣骑士', 'map': 'bwj', 'position': 'up'},
-        '圣骑士': {'name': 'paladin', 'point': role_paladin, 'next_role': '漫游枪手', 'map': 'bwj', 'position': 'up'},
-        '漫游枪手': {'name': 'ranger', 'point': role_ranger, 'next_role': '枪炮师', 'map': 'bwj', 'position': 'up'},
-        '枪炮师': {'name': 'launcher', 'point': role_launcher, 'next_role': '剑魔', 'map': 'bwj', 'position': 'up'},
-        '剑魔': {'name': 'demon_slayer', 'point': role_demon_slayer, 'next_role': '剑豪', 'map': 'bwj', 'position': 'down'},
-        '剑豪': {'name': 'vagabond', 'point': role_vagabond, 'next_role': '剑宗', 'map': 'bwj', 'position': 'down'},
-        '剑宗': {'name': 'sword_master', 'point': role_sword_master, 'next_role': None, 'map': 'bwj', 'position': 'down'},
-
-
-
+        '漫游枪手': {'name': 'ranger', 'point': role_ranger, 'next_role': None, 'map': 'bwj'},
+        '圣骑士': {'name': 'paladin','point': role_paladin, 'next_role': '漫游枪手', 'map': 'bwj'},
+        '狂战士':  {'name': 'berserker','point': role_berserker, 'next_role': '圣骑士', 'map': 'bwj'},
+        '阿修罗':  {'name': 'asura','point': role_asura, 'next_role': '狂战士', 'map': 'bwj'},
+        # '剑宗':  {'name': 'jian_zong','point': role_jian_zong, 'next_role': '百花', 'map': 'bwj'},
       }
       self.role = self.roles[hero_name]
       self.thread = threading.Thread(target=self.view)  # 创建线程，并指定目标函数
-      self.thread.daemon = True  # 设置为守护线程（可选）
+      self.thread.daemon = False  # 设置为守护线程（可选）
       self.thread.start()
       
     def start(self):
@@ -82,22 +75,12 @@ class Main:
     
     def select_role(self):
       if self.role:
-        # 如果角色位置为上排，直接点击选中
-        if self.role['position'] == 'up':
-            self.adb.touch(self.role['point'])
-            logger.info('选中角色 %s', str(self.role['name']))
-            time.sleep(1)
-        # 如果角色位置为下排，先从角色坐标往上滑动，再点击角色坐标选中
-        elif self.role['position'] == 'down':
-            self.adb.touch([self.role['point'][0], self.role['point'][1] + 220])
-            logger.info('选中角色 %s', str(self.role['name']))
-            time.sleep(2)
+        self.adb.touch(self.role['point'])
+        time.sleep(1)
         # 开始游戏
         self.adb.touch(start_game, 1)
-        logger.info('开始游戏')
         time.sleep(20)
         # 自动寻路 TODO 不同角色不同地图
-        logger.info('准备移动到布万加')
         move_to_bwj(self.adb)
       
     # 播放游戏画面  
@@ -141,11 +124,10 @@ class Main:
           cv.waitKey(1)
 
 if __name__ == "__main__":
-    main = Main('枪炮师')
+    main = Main('漫游枪手')
     main.select_role()
     time.sleep(1)
     main.start()
-
     # main.select_next_role()
     # 测试代码
     # adb = ScrcpyADB()

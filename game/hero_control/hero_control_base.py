@@ -77,7 +77,7 @@ class HeroControlBase:
             "right": 0,
             "right_up": 45,
             "up": 90,
-            "left_up": 125,
+            "left_up": 135,
             "left": 180,
             "left_down": 225,
             "down": 270,
@@ -126,7 +126,7 @@ class HeroControlBase:
         :param t:
         :return:
         """
-        x, y = awaken_skill
+        x, y = skill_top_a
         logger.info("执行觉醒攻击")
         self.adb.touch((x, y), t)
 
@@ -135,7 +135,7 @@ class HeroControlBase:
         x, y = self.calc_mov_point(angle)
         if angle == 0:
             if self.move_touch == "none":
-              return
+                return
             self.move_touch = "none"
             self.adb.touch_end(self.last_move, 1)
             return
@@ -148,26 +148,28 @@ class HeroControlBase:
                 self.adb.touch_move([x, y], 1)
                 self.last_move = [x, y]
             elif self.move_touch == "start":
-                  self.move_touch = "move"
-                  self.adb.touch_move([x, y], 1)
-                  self.last_move = [x, y]
+                self.move_touch = "move"
+                self.adb.touch_move([x, y], 1)
+                self.last_move = [x, y]
             else:
                 self.adb.touch_move([x, y], 1)
                 self.last_move = [x, y]
-            if(t > 0):
-              time.sleep(t)
-              self.move_touch = "none"
-              self.adb.touch_end(self.last_move, 1)
-    def move_to_monster(self, angle:int, hero_pos, close_monster_point):
-        if abs(hero_pos[1]-close_monster_point[1])<0.1 and abs(hero_pos[0]-close_monster_point[0])<0.15:
+            if (t > 0):
+                time.sleep(t)
+                self.move_touch = "none"
+                self.adb.touch_end(self.last_move, 1)
+
+    def move_to_monster(self, angle: int, hero_pos, close_monster_point):
+        if abs(hero_pos[1] - close_monster_point[1]) < 0.15 and abs(hero_pos[0] - close_monster_point[0]) < 0.2:
             self.moveV2(0)
             return True
         else:
             self.moveV2(angle)
-                
+
     def reset(self):
-            self.moveV2(0)
-            # self.attack(False)
+        self.moveV2(0)
+        # self.attack(False)
+
 
 if __name__ == "__main__":
     adb = ScrcpyADB()
